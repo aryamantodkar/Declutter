@@ -3,7 +3,6 @@ import { StyleSheet, ActivityIndicator, SafeAreaView } from 'react-native';
 import { useFonts } from 'expo-font';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import BeIntentional from './components/BeIntentional';
 import Homepage from './components/Homepage';
 import Settings from './components/Settings';
 import { SelectedAppsProvider } from './components/SelectedAppsProvider';
@@ -33,15 +32,6 @@ export default function App() {
             name="Homescreen"
             component={Homepage}
             options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="CloseApp"
-            component={BeIntentional}
-            options={{
-              headerShown: false, // No header
-              gestureEnabled: false, // Disable swipe gestures
-              headerLeft: null, // Disable back button
-            }}
           />
           <Stack.Screen
             name="Settings"

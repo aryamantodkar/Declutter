@@ -1,23 +1,58 @@
-import { StyleSheet, Text, View, Pressable, TextInput, Animated, Keyboard, TouchableWithoutFeedback } from 'react-native';
-import React, { useRef, useMemo, useCallback, useState } from 'react';
+import { StyleSheet, Text, View, Pressable, TextInput, Animated, Keyboard, TouchableWithoutFeedback, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
+import React, { useRef, useMemo, useCallback, useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useNavigation } from '@react-navigation/native'; 
 import Entypo from '@expo/vector-icons/Entypo';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { GestureHandlerRootView,  } from 'react-native-gesture-handler';
-import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetFlatList, BottomSheetView, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import AppList from '../urlSchemes.json'; // Ensure this contains an array of objects
 import { useSelectedApps } from './SelectedAppsProvider';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import WallpaperPreview from '../assets/wallpaper-preview.svg';
+import DarkMode from '../assets/dark-mode.svg';
+
+const steps = [
+  {
+    title: 'Enable Dark Mode',
+    description: 'Settings → Dsiplay & Brightness → Appearance → Dark',
+  },
+  {
+    title: 'Set the Wallpaper',
+    description: 'Tap to download and set the provided wallpaper.',
+  },
+  {
+    title: 'Clean Your Home Screen',
+    description: 'Long-press all icons → Remove from Home Screen. \n\nRemove all apps from the Homescreen.',
+  },
+  {
+    title: 'Hide Distractions',
+    description: 'Long-press icons → Require Face ID → Hide and Require Face ID.',
+  },
+  {
+    title: 'Move This App to the Dock',
+    description: 'Drag this app down to the dock for easy access.',
+  },
+  {
+    title: 'Choose 5 Essential Apps',
+    description: 'Pick the apps you actually need inside the app.',
+  },
+];
 
 const Settings = () => {
   const navigation = useNavigation();
   const { selectedApps, setSelectedApps } = useSelectedApps();
   const sheetRef = useRef(null);
+  const guideRef = useRef(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectionAnimation] = useState(new Animated.Value(0));
   const [sheetIndex, setSheetIndex] = useState(-1);
+  const [guideIndex, setGuideIndex] = useState(-1);
   const [isBottomSheetOpen,setIsBottomSheetOpen] = useState(false);
+  const [isDeclutterGuideOpen,setIsDeclutterGuideOpen] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState([]);
 
   const snapPoints = useMemo(() => ['95%'], []);
 
@@ -25,13 +60,21 @@ const Settings = () => {
     // console.log('handleSheetChange', index);
     if(index==-1){
         setIsBottomSheetOpen(false);
+        setIsDeclutterGuideOpen(false);
     }
   }, []);
 
-  const handleSnapPress = useCallback((index) => {
-    sheetRef.current?.snapToIndex(index);
-    setSheetIndex(index);
-    setIsBottomSheetOpen(true);
+  const handleSnapPress = useCallback((index,option) => {
+    if(option==1){
+        guideRef.current?.snapToIndex(index);
+        setGuideIndex(index);
+        setIsDeclutterGuideOpen(true);
+    }
+    else{
+      sheetRef.current?.snapToIndex(index);
+      setSheetIndex(index);
+      setIsBottomSheetOpen(true);
+    }
   }, []);
 
   const handleClosePress = useCallback(() => {
@@ -119,7 +162,6 @@ const Settings = () => {
   
     return searchQuery ? [...filteredRemainingApps] : [...filteredSelectedApps, ...filteredRemainingApps];
   }, [filteredApps, selectedApps]);
-  
 
   return (
     <SafeAreaView edges={['top','left','right']} style={styles.container}>
@@ -137,11 +179,11 @@ const Settings = () => {
                         <Text style={{ fontFamily: 'OutfitMedium', color: '#fff', fontSize: 30 }}>Settings</Text>
                     </View>
                     <View style={{ marginVertical: 20, width: '100%' }}>
-                        <Pressable style={[{ marginVertical: 20 }, styles.settingBtn]}>
-                        <View style={{ marginRight: 10 }}>
-                            <Entypo name="mobile" size={24} color="#ddd" />
-                        </View>
-                        <Text style={{ color: '#ddd', fontFamily: 'OutfitRegular', fontSize: 18 }}>Declutter Guide</Text>
+                        <Pressable onPress={() => handleSnapPress(0,1)} style={[{ marginVertical: 20 }, styles.settingBtn]}>
+                          <View style={{ marginRight: 10 }}>
+                              <Entypo name="mobile" size={24} color="#ddd" />
+                          </View>
+                          <Text style={{ color: '#ddd', fontFamily: 'OutfitRegular', fontSize: 18 }}>Declutter Guide</Text>
                         </Pressable>
                         <Pressable style={[{ marginVertical: 20 }, styles.settingBtn]}>
                         <View style={{ marginRight: 10 }}>
@@ -151,7 +193,7 @@ const Settings = () => {
                             Subscribe to <Text style={{ color: '#fff', fontFamily: 'OutfitMedium' }}>PRO</Text>
                         </Text>
                         </Pressable>
-                        <Pressable onPress={() => handleSnapPress(0)} style={[{ marginVertical: 20 }, styles.settingBtn]}>
+                        <Pressable onPress={() => handleSnapPress(0,2)} style={[{ marginVertical: 20 }, styles.settingBtn]}>
                         <View style={{ marginRight: 10 }}>
                             <Entypo name="edit" size={24} color="#ddd" />
                         </View>
@@ -216,6 +258,131 @@ const Settings = () => {
                     :
                     null
                 }
+                {
+                  isDeclutterGuideOpen
+                  ?
+                  <BottomSheet
+                    ref={guideRef}
+                    index={guideIndex}
+                    snapPoints={snapPoints}
+                    enableDynamicSizing={false}
+                    onChange={handleSheetChange}
+                    backgroundStyle={{ backgroundColor: '#171717', borderRadius: 20 }}
+                    handleIndicatorStyle={{ backgroundColor: '#fff' }}
+                    enablePanDownToClose
+                  >
+                    <BottomSheetScrollView style={{ padding: 24,}}>
+                      <View style={{marginBottom: 30, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 26, fontFamily: 'Outfit-Medium', color: '#fff', }}>
+                          Minimalist Setup Guide
+                        </Text>
+                      </View>
+                      {/* <Text style={{ fontSize: 16, fontFamily: 'Outfit-Regular', color: '#aaa', marginBottom: 20 }}>
+                        Follow these simple steps to declutter your home screen.
+                      </Text> */}
+                      {steps.map((step, index) => (
+                          <View
+                            key={index}
+                            style={{
+                              backgroundColor: '#1E1E1E',
+                              borderRadius: 16,
+                              padding: 16,
+                              marginBottom: 15,
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <View style={{}}>
+                              <View style={{marginBottom: 5}}>
+                                <Text style={{ fontSize: 22, fontFamily: 'Outfit-Medium', color: '#fff' }}>
+                                  {step.title}
+                                </Text>
+                              </View>
+                              <Text style={{ fontSize: 14, fontFamily: 'Outfit-Regular', color: '#aaa', marginTop: 4 }}>
+                                {step.description}
+                              </Text>
+                            </View>
+                            <View style={{ flex: 1, marginVertical: 10 }}>
+                              {
+                                index==0
+                                ?
+                                <View style={{marginVertical: 10}}>
+                                  <DarkMode width={Dimensions.get('window').width*0.8} height={200} />
+                                </View>
+                                :
+                                (
+                                  index==1
+                                  ? 
+                                  <View style={{marginVertical: 10}}>
+                                    <WallpaperPreview width={Dimensions.get('window').width*0.8} height={150} />
+                                  </View>
+                                  :
+                                  (
+                                    index==2
+                                    ?
+                                    <View style={{marginVertical: 10}}>
+                                      <Image 
+                                        source={require('../assets/remove-app.gif')} // Local gif
+                                        style={{width: Dimensions.get('window').width*0.8, height: 200}} 
+                                      />
+                                    </View>
+                                    :
+                                    (
+                                      index==3
+                                      ?
+                                      <View style={{marginVertical: 10}}>
+                                        <Image 
+                                          source={require('../assets/hide-apps.gif')} // Local gif
+                                          style={{width: Dimensions.get('window').width*0.8, height: 280}} 
+                                        />
+                                      </View>
+                                      :
+                                      (
+                                        index==4
+                                        ?
+                                        null
+                                        :
+                                        <View style={{}}>
+                                          <Pressable onPress={() => {
+                                            handleSnapPress(-1,1);
+                                            handleSnapPress(0,2);
+                                            setIsDeclutterGuideOpen(false);
+                                            setIsBottomSheetOpen(true);
+                                          }} style={{padding: 15,paddingHorizontal: 20,borderRadius: 30,backgroundColor: '#242424'}}>
+                                            <Text style={{fontFamily: 'Outfit-Regular', fontSize: 14, color: '#fff'}}>Select Apps</Text>
+                                          </Pressable>
+                                        </View>
+                                      )
+                                    )
+                                  )
+                                )
+                              }
+                            </View>
+                            {
+                              index==1
+                              ?
+                              <Pressable style={{backgroundColor: '#262626', padding: 15,paddingHorizontal: 25,borderRadius: 30}}>
+                                <Text style={{fontFamily: 'Outfit-Regular', color: '#fff',}}>Save Wallpaper</Text>
+                              </Pressable>
+                              :
+                              null
+                            }
+                          </View>
+                        ))}
+                      <View style={{marginVertical: 20,paddingBottom: 40, alignItems: 'center', display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={{marginRight: 10}}>
+                          <AntDesign name="checkcircle" size={24} color="#17C900"/>
+                        </View>
+                        <Text style={{ fontSize: 26, fontFamily: 'Outfit-Medium', color: '#fff', }}>
+                          You're All Set!
+                        </Text>
+                      </View>
+                    </BottomSheetScrollView>
+                  </BottomSheet>
+                  :
+                  null
+                }
             </View>
             </TouchableWithoutFeedback>
         </GestureHandlerRootView>
@@ -257,7 +424,7 @@ const styles = StyleSheet.create({
   itemContainer: {
     padding: 15,
     marginVertical: 5,
-    backgroundColor: '#242424',
+    backgroundColor: '#1e1e1e',
     borderRadius: 8,
     marginBottom: 15,
     shadowColor: '#2f2f2f',
