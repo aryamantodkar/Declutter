@@ -6,10 +6,13 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Homepage from './components/Homepage';
 import Settings from './components/Settings';
 import { SelectedAppsProvider } from './components/SelectedAppsProvider';
+import { Cloudinary } from '@cloudinary/url-gen';
 
 const Stack = createStackNavigator();
 
 export default function App() {
+  const cld = new Cloudinary({ cloud: { cloudName: 'dhpjqucss' } });
+
   const [fontsLoaded] = useFonts({
     'OutfitRegular': require('./assets/fonts/Outfit-Regular.ttf'),
     'OutfitMedium': require('./assets/fonts/Outfit-Medium.ttf'),

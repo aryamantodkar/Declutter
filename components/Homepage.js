@@ -27,7 +27,7 @@ const Homepage = () => {
 
   return (
     <SafeAreaView edges={['top','left','right']} style={styles.container}>
-      <Pressable onPress={() => navigation.navigate('Settings')} style={[styles.settingsIcon, { top: height * 0.1, right: width * 0.1 }]}>
+      <Pressable onPress={() => navigation.navigate('Settings')} style={[styles.settingsIcon, { top: 80 , right: 40 }]}>
         <Ionicons name="settings-sharp" size={30} color="#fff" />
       </Pressable>
 
